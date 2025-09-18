@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI对话助手 - 炫酷大模型交互平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <!-- 配置Tailwind CSS -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5', // 主色调：靛蓝色
+                        secondary: '#EC4899', // 辅助色：粉色
+                        dark: '#111827', // 深色背景
+                        light: '#F9FAFB', // 浅色背景
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                },
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .backdrop-blur {
+                backdrop-filter: blur(8px);
+            }
+            .text-gradient {
+                background-clip: text;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+        }
+    </style>
+    
+    <style>
+        /* 基础动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        /* 打字动画效果 */
+        .typing-indicator span {
+            animation: typing 1.4s infinite both;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0% { opacity: 0.3; transform: translateY(3px); }
+            50% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0.3; transform: translateY(3px); }
+        }
+        
+        /* 背景渐变动画 */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .bg-gradient-animate {
+            background-size: 200% 200%;
+            animation: gradientShift 15s ease infinite;
+        }
+        
+        /* 悬浮放大效果 */
+        .hover-scale {
+            transition: transform 0.2s ease;
+        }
+        
+        .hover-scale:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-dark to-gray-900 min-h-screen font-inter text-light overflow-x-hidden">
+    <!-- 头部导航 -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-dark/80 backdrop-blur border-b border-gray-800 transition-all duration-300">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                    <i class="fa fa-robot text-white text-xl"></i>
+                </div>
+                <h1 class="text-xl font-bold bg-gradient-to-r from-primary to-secondary text-gradient">AI对话助手</h1>
+            </div>
+            
+            <div class="hidden md:flex items-center space-x-6">
+                <button class="text-gray-300 hover:text-white transition-colors">
+                    <i class="fa fa-history mr-1"></i>历史
+                </button>
+                <button class="text-gray-300 hover:text-white transition-colors">
+                    <i class="fa fa-book mr-1"></i>知识库
+                </button>
+                <button class="text-gray-300 hover:text-white transition-colors">
+                    <i class="fa fa-cog mr-1"></i>设置
+                </button>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <button class="p-2 rounded-full bg-gray-800 text-gray-300 hover:bg-gray-700 transition-colors">
+                    <i class="fa fa-bell"></i>
+                </button>
+                <div class="h-9 w-9 rounded-full bg-gray-700 overflow-hidden cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
+                    <img src="https://picsum.photos/id/64/200/200" alt="用户头像" class="h-full w-full object-cover">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside class="fixed left-0 top-16 bottom-0 w-64 bg-dark/60 backdrop-blur border-r border-gray-800 overflow-y-auto scrollbar-hide transition-all duration-300 z-40">
+        <div class="p-4">
+            <button class="w-full py-3 px-4 rounded-lg bg-primary hover:bg-primary/90 text-white font-medium transition-colors flex items-center justify-center space-x-2 hover-scale">
+                <i class="fa fa-plus-circle"></i>
+                <span>新建对话</span>
+            </button>
+        </div>
+        
+        <div class="px-3 space-y-1">
+            <h2 class="text-xs uppercase text-gray-500 font-semibold px-3 py-2">最近对话</h2>
+            <div class="space-y-1">
+                <!-- 对话列表项 -->
+                <div class="px-3 py-2 rounded-lg bg-primary/10 border border-primary/20 cursor-pointer hover:bg-primary/20 transition-colors">
+                    <div class="text-sm font-medium">AI大模型如何改变世界？</div>
+                    <div class="text-xs text-gray-400 truncate">探讨人工智能对未来社会的影响...</div>
+                </div>
+                <div class="px-3 py-2 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors">
+                    <div class="text-sm font-medium">前端性能优化技巧</div>
+                    <div class="text-xs text-gray-400 truncate">分享一些提高网站加载速度的方法</div>
+                </div>
+                <div class="px-3 py-2 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors">
+                    <div class="text-sm font-medium">健康饮食计划</div>
+                    <div class="text-xs text-gray-400 truncate">一周减脂餐单推荐和营养搭配</div>
+                </div>
+                <div class="px-3 py-2 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors">
+                    <div class="text-sm font-medium">学习Python的最佳路径</div>
+                    <div class="text-xs text-gray-400 truncate">从入门到精通的学习计划和资源推荐</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="px-3 space-y-1 mt-6">
+            <h2 class="text-xs uppercase text-gray-500 font-semibold px-3 py-2">收藏的对话</h2>
+            <div class="space-y-1">
+                <div class="px-3 py-2 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors">
+                    <div class="text-sm font-medium">个人理财建议</div>
+                    <div class="text-xs text-gray-400 truncate">如何合理规划个人财务和投资策略</div>
+                </div>
+                <div class="px-3 py-2 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors">
+                    <div class="text-sm font-medium">旅行攻略：日本东京</div>
+                    <div class="text-xs text-gray-400 truncate">7天6晚东京深度游行程安排</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-4 left-0 right-0 px-4">
+            <div class="h-40 bg-gray-800 rounded-xl overflow-hidden border border-gray-700">
+                <div class="p-3 bg-gray-900 border-b border-gray-700 flex justify-between items-center">
+                    <span class="text-xs font-medium">性能监控</span>
+                    <button class="text-gray-400 hover:text-white">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-3">
+                    <canvas id="performanceChart" width="100%" height="100%"></canvas>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="pt-16 pl-64 h-screen flex flex-col">
+        <!-- 对话区域 -->
+        <div id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-8 scrollbar-hide">
+            <!-- 欢迎消息 -->
+            <div class="flex items-start space-x-4 message-fade-in">
+                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex-shrink-0 flex items-center justify-center">
+                    <i class="fa fa-robot text-white text-lg"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="bg-gray-800 rounded-2xl p-5 shadow-lg hover-scale">
+                        <p class="mb-4">👋 你好！我是你的AI对话助手，很高兴为你服务。请问有什么我可以帮助你的吗？</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
+                            <button class="py-2 px-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-gray-200 transition-colors hover-scale">
+                                推荐一部电影
+                            </button>
+                            <button class="py-2 px-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-gray-200 transition-colors hover-scale">
+                                写一篇短文
+                            </button>
+                            <button class="py-2 px-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-gray-200 transition-colors hover-scale">
+                                帮我学习编程
+                            </button>
+                            <button class="py-2 px-3 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-gray-200 transition-colors hover-scale">
+                                健康生活建议
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 用户消息示例 -->
+            <div class="flex items-start justify-end space-x-4 message-fade-in">
+                <div class="flex-1 max-w-[85%]">
+                    <div class="bg-primary rounded-2xl p-5 shadow-lg hover-scale">
+                        <p>你能解释一下量子计算的基本原理吗？我对这个概念很感兴趣但不太了解。</p>
+                    </div>
+                </div>
+                <div class="h-10 w-10 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                    <img src="https://picsum.photos/id/64/200/200" alt="用户头像" class="h-full w-full object-cover">
+                </div>
+            </div>
+            
+            <!-- AI回复示例 -->
+            <div class="flex items-start space-x-4 message-fade-in">
+                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex-shrink-0 flex items-center justify-center">
+                    <i class="fa fa-robot text-white text-lg"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="bg-gray-800 rounded-2xl p-5 shadow-lg hover-scale">
+                        <h3 class="text-lg font-semibold mb-2 text-primary">量子计算的基本原理</h3>
+                        <p class="mb-3">量子计算是一种基于量子力学原理的计算方式，与传统计算机有本质区别：</p>
+                        <ul class="list-disc pl-5 mb-3 space-y-1">
+                            <li><span class="font-medium">量子比特（Qubit）</span>：传统计算机使用比特（0或1），量子计算机使用量子比特，可以同时处于0和1的叠加态</li>
+                            <li><span class="font-medium">量子叠加</span>：量子比特可以同时表示多种状态，使量子计算机能够并行处理大量信息</li>
+                            <li><span class="font-medium">量子纠缠</span>：量子比特之间可以建立特殊关联，改变一个会立即影响另一个，无论距离多远</li>
+                        </ul>
+                        <p>这些特性使量子计算机在某些特定问题（如大数分解、数据库搜索）上具有远超传统计算机的计算能力。</p>
+                    </div>
+                    <div class="flex justify-between mt-2 px-2">
+                        <div class="flex space-x-2">
+                            <button class="text-gray-400 hover:text-white transition-colors">
+                                <i class="fa fa-thumbs-up"></i>
+                            </button>
+                            <button class="text-gray-400 hover:text-white transition-colors">
+                                <i class="fa fa-thumbs-down"></i>
+                            </button>
+                        </div>
+                        <button class="text-gray-400 hover:text-white transition-colors text-sm">
+                            <i class="fa fa-copy mr-1"></i>复制
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 打字动画 -->
+            <div class="flex items-start space-x-4 message-fade-in">
+                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex-shrink-0 flex items-center justify-center">
+                    <i class="fa fa-robot text-white text-lg"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="bg-gray-800 rounded-2xl p-5 shadow-lg inline-block">
+                        <div class="typing-indicator flex space-x-1">
+                            <span class="h-2 w-2 rounded-full bg-gray-400"></span>
+                            <span class="h-2 w-2 rounded-full bg-gray-400"></span>
+                            <span class="h-2 w-2 rounded-full bg-gray-400"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 输入区域 -->
+        <div class="p-6 border-t border-gray-800 bg-dark/80 backdrop-blur">
+            <div class="max-w-3xl mx-auto">
+                <div class="relative">
+                    <textarea id="message-input" rows="1" class="w-full pr-12 pl-4 py-3 bg-gray-800 border border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary resize-none transition-all" placeholder="输入你的问题..."></textarea>
+                    <div class="absolute right-2 bottom-2 flex space-x-1">
+                        <button class="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700">
+                            <i class="fa fa-paperclip"></i>
+                        </button>
+                        <button class="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700">
+                            <i class="fa fa-microphone"></i>
+                        </button>
+                        <button id="send-button" class="p-2 text-white bg-primary hover:bg-primary/90 transition-colors rounded-lg hover-scale">
+                            <i class="fa fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-center mt-4 text-xs text-gray-500">
+                    <p>按 Enter 发送消息，Shift + Enter 换行</p>
+                    <p class="mt-1">使用 AI 时，请确保遵守相关法律法规和伦理准则</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 移动端菜单按钮 -->
+    <button id="mobile-menu-button" class="fixed left-4 bottom-4 md:hidden h-12 w-12 rounded-full bg-primary text-white shadow-lg flex items-center justify-center z-50 hover:bg-primary/90 transition-colors hover-scale">
+        <i class="fa fa-bars text-xl"></i>
+    </button>
+
+    <!-- JavaScript -->
+    <script>
+        // 初始化性能监控图表
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            const performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1s', '2s', '3s', '4s', '5s', '6s'],
+                    datasets: [{
+                        label: '响应时间',
+                        data: [0.8, 0.5, 0.9, 0.6, 0.4, 0.7],
+                        borderColor: '#4F46E5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.2)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1F2937',
+                            titleColor: '#E5E7EB',
+                            bodyColor: '#E5E7EB',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            padding: 10,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false,
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#9CA3AF',
+                                font: {
+                                    size: 8
+                                }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: '#374151',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#9CA3AF',
+                                font: {
+                                    size: 8
+                                },
+                                callback: function(value) {
+                                    return value + 's';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 自动调整输入框高度
+            const textarea = document.getElementById('message-input');
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight < 120 ? this.scrollHeight : 120) + 'px';
+            });
+            
+            // 发送消息功能
+            const sendButton = document.getElementById('send-button');
+            sendButton.addEventListener('click', sendMessage);
+            
+            textarea.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // 模拟发送消息
+            function sendMessage() {
+                const message = textarea.value.trim();
+                if (message) {
+                    // 清空输入框
+                    textarea.value = '';
+                    textarea.style.height = 'auto';
+                    
+                    // 在实际应用中，这里会发送消息到服务器并处理响应
+                    console.log('发送消息:', message);
+                    
+                    // 模拟接收响应延迟
+                    setTimeout(() => {
+                        // 在实际应用中，这里会处理服务器返回的响应
+                        console.log('收到响应');
+                    }, 1000);
+                }
+            }
+            
+            // 移动端菜单切换
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const sidebar = document.querySelector('aside');
+            
+            mobileMenuButton.addEventListener('click', function() {
+                sidebar.classList.toggle('translate-x-0');
+                sidebar.classList.toggle('-translate-x-full');
+            });
+            
+            // 模拟滚动到底部
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+    </script>
+</body>
+</html>
